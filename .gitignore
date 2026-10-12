@@ -1,0 +1,53 @@
+# dependencies (bun install)
+node_modules/
+
+# output
+/out/
+/dist/
+*.tgz
+
+# code coverage
+coverage/
+*.lcov
+
+# logs
+logs/
+*.log
+report.*.json
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# caches
+.eslintcache
+.cache/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+
+# IntelliJ based IDEs
+.idea/
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# private reference assets
+/_sample_assets/
+
+# local tooling and browser verification artifacts
+/.aws/
+/.codex/
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
+
+# Use system fonts; never commit font binaries
+*.ttf
+*.otf
+*.woff
+*.woff2
+*.eot
+/public/fonts/

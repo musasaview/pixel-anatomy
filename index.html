@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f8f8f3" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="description" content="ピクセルのしくみを、光の構造から知る。LCD・OLED・ブラウン管を観察するディスプレイ顕微鏡。" />
+  <title>ピクセルの中身を覗く</title>
+</head>
+<body>
+  <main id="source-page"></main>
+  <canvas id="display" tabindex="0"></canvas>
+  <section class="instrument" id="instrument">
+  <aside id="microscope-hud" class="microscope-hud">
+    <div class="microscope-zoom"><output id="zoom-value">1.00×</output><span id="stage-label"></span></div>
+    <div class="microscope-metrics">
+      <div><span id="distance-label"></span><output id="distance-value"></output></div>
+      <div><span id="pixel-label"></span><output id="pixel-value"></output></div>
+      <div><span id="emitter-label"></span><output id="subpixel-value"></output></div>
+    </div>
+  </aside>
+    <div class="compact-row">
+      <div id="panel-options" class="panel-icons"></div>
+      <div class="toolbar-actions">
+        <button id="zoom-out">−</button><button id="zoom-in">+</button>
+        <button id="reset">↺</button><button id="motion-toggle" aria-pressed="false">Ⅱ</button>
+        <button id="settings-toggle" aria-controls="settings-popover" aria-expanded="false">⋮</button>
+      </div>
+    </div>
+    <div class="settings-popover" id="settings-popover" hidden data-scrollable>
+      <strong id="settings-title"></strong>
+      <label class="settings-language"><span data-i18n="language"></span><select id="language-select"></select></label>
+      <details id="shortcut-details"><summary data-i18n="helpLabel"></summary><p id="help-body"></p><dl id="help-shortcuts"></dl></details>
+    </div>
+  </section>
+  <div id="photo-controls" hidden><button id="choose-image"></button><button id="restore-cat" hidden></button></div>
+  <input id="local-image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" hidden/>
+  <div class="status" id="status" role="status"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
