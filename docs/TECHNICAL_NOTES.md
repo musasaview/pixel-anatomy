@@ -39,7 +39,7 @@
 
 ## 描画仕様と補足資料
 
-LCD・OLED・CRTのプレビューは、拡大表示と同じ `simulatePanel` シェーダーから生成します。WOLEDはパステル色、赤・緑・青・白の入力を使います。CMYKのサンプルだけは、Psiĥedelistoによる実物の顕微鏡写真（CC0）を使用します。元画像をローカル保存し、CSSで中央部分を表示します。出典と利用条件は `public/images/CREDITS.md` に記載しています。CMYKの分版と反射率の計算は線形光で行い、表示時にsRGBへ戻します。印刷モードには液晶のピクセル格子を重ねません。LCD RGBストライプの小点は、サブピクセルの電圧を制御するTFTと配線を示します。シェブロンLCDはRGB開口が曲がる例です。電極の折れ曲がりで複数の液晶配向を作る設計はIPSなどに見られ、外形だけからIPS・VAを判別するものではありません。
+LCD・OLED・CRTのプレビューは、拡大表示と同じ `simulatePanel` シェーダーから生成します。WOLEDはパステル色、赤・緑・青・白の入力を使います。CMYKのサンプルだけは、Psiĥedelistoによる実物の顕微鏡写真（CC0）を使用します。軽量化した画像をローカル配信し、CSSで中央部分を表示します。出典と利用条件は `public/images/CREDITS.md` に記載しています。CMYKの分版と反射率の計算は線形光で行い、表示時にsRGBへ戻します。印刷モードには液晶のピクセル格子を重ねません。LCD RGBストライプの小点は、サブピクセルの電圧を制御するTFTと配線を示します。シェブロンLCDはRGB開口が曲がる例です。電極の折れ曲がりで複数の液晶配向を作る設計はIPSなどに見られ、外形だけからIPS・VAを判別するものではありません。
 
 WOLEDの図は、白色OLEDとRGBフィルターにフィルターなしのW要素を加えたRWBGの模式例です。WOLEDの各要素の順序や駆動方法は製品・世代によって異なります。[RTINGSのWOLEDとQD-OLEDの解説](https://www.rtings.com/monitor/learn/woled-vs-qd-oled)では、実機の配列例としてRWBGやRGWBを確認できます。Diamond PenTileの歴史と配列については[2013年のInformation Display誌](https://archive.informationdisplay.org/Portals/InformationDisplay/IssuePDF/02_2013.pdf)と[US20060244885A1](https://patents.google.com/patent/US20060244885A1/en)、[Samsung Displayの資料](https://global.samsungdisplay.com/29043/)を参照しています。QD-OLEDの説明は[Samsung Displayの資料](https://global.samsungdisplay.com/31114)も参考にしています。
 
@@ -55,3 +55,8 @@ CMYKの説明は [CMYK color model](https://en.wikipedia.org/wiki/CMYK_color_mod
 等倍時にタッチのPointer Eventsを除外していたため、ピンチがアプリの拡大処理に入らなかった。タッチだけをTouch Eventsへ分離し、2本指操作と拡大時の移動で既定操作を抑止する。等倍の1本指スクロールとマウス・ホイール・キーボードの処理は維持する。イベント処理は[MDNのマルチタッチ解説](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events/Multi-touch_interaction)を参照。
 
 `(pointer:coarse) and (max-width:960px)` の端末では方式一覧を横スクロールにし、数値の詳細を設定内へ移す。390px幅の操作部は高さ314pxから136pxになった。専用Chromiumのタッチエミュレーションで等倍スクロール、繰り返しピンチによる2048倍、リセット、320/390px幅と横向き844px幅、デスクトップのボタン寸法・数値表示・ボタンとキーボードの倍率を確認した。320px幅・2048倍で8言語の設定内数値に重なりがないことも確認した。iPhone実機のSafariは未検証。
+
+
+## 写真とフォントの軽量化（2026-10-12）
+
+猫写真はEXIFの向きを画像へ適用して900×1200px、JPEG品質84に縮小し、2,754,176バイトから92,041バイトへ軽量化。CMYK写真は網点の寸法を変えず1600×1200pxを維持し、JPEG品質90・4:4:4で再圧縮して1,854,295バイトから932,335バイトへ軽量化した。両方の画像からメタデータを除去し、ゲーム画像は変更していない。圧縮前後の見た目と画像の読み込みを確認した。文字比較Canvasも本文のシステムフォントを使い、旧フォント名の指定を除去した。

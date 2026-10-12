@@ -79,7 +79,7 @@ p{font-size:16px;line-height:2;color:#6b7c62;margin:0 0 17px}
 .panel-toggle-copy strong{font-size:11px;font-weight:500}
 .picker-chevron{margin-left:auto;color:#8eaa76;font-size:15px}
 .language-control{display:flex;align-items:center;gap:5px;border:1px solid #485740;background:#2a372a;border-radius:6px;padding:11px 8px;color:#a7bd94}
-.language-control select{border:0;outline:0;background:transparent;color:#cbd9bf;font-family:'DM Sans','Noto Sans JP','Noto Sans SC','Noto Sans KR',sans-serif;font-size:11px;max-width:105px;cursor:pointer}
+.language-control select{border:0;outline:0;background:transparent;color:#cbd9bf;font-family:inherit;font-size:11px;max-width:105px;cursor:pointer}
 .language-control option{background:#263124;color:#d7e2cc}
 .language-control:focus-within{outline:2px solid #b7d697;outline-offset:3px}
 .instrument-main{display:flex;align-items:center;gap:20px;justify-content:space-between}

@@ -1,6 +1,6 @@
 # Cat photograph
 
-- File: `cat.jpg` (original, unmodified)
+- File: `cat.jpg` (optimized JPEG, 900 × 1200; EXIF orientation applied, metadata removed)
 - Title: Red tabby looking down at camera
 - Photographer: Roc0ast3r
 - Source: https://commons.wikimedia.org/wiki/File:Red_tabby_looking_down_at_camera.jpg
@@ -13,7 +13,7 @@ The photograph is served locally. User-selected images are decoded and rendered 
 
 # CMYK microscope photograph
 
-- File: `cmyk-microscope.jpg` (original JPEG bytes, unmodified)
+- File: `cmyk-microscope.jpg` (optimized JPEG, original 1600 × 1200 resolution, 4:4:4 chroma; metadata removed)
 - Title: CMYK under a microscope
 - Photographer: Psiĥedelisto
 - Date: 2018-02-24

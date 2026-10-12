@@ -217,7 +217,7 @@ async function start() {
     capturing = true;
     status.textContent = t.loading;
     try {
-      // Force layout so the newly selected language requests its local fonts.
+      // Force layout before waiting for the selected language’s fonts to settle.
       source.getBoundingClientRect();
       await document.fonts.ready;
       // Leave the footer reachable even when the mode buttons wrap on small screens.

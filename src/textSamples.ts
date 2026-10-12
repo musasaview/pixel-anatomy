@@ -15,7 +15,7 @@ export function textSamples(scale = 1) {
   const context = coverage.getContext('2d', { willReadFrequently: true })!;
   context.scale(3, 1);
   context.fillStyle = '#fff';
-  context.font = `500 ${38*scale}px "DM Sans"`;
+  context.font = `500 ${38*scale}px ${getComputedStyle(document.documentElement).fontFamily}`;
   context.textBaseline = 'middle';
   context.fillText('Aa', 17.2*scale, height / 2);
   const samples = context.getImageData(0, 0, coverage.width, height).data;
