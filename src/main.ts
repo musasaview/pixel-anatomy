@@ -170,6 +170,7 @@ async function start() {
   let previousTime = 0;
   let lastHUD = '';
   let snapshot: HTMLCanvasElement | null = null;
+  let snapshotLayout = { width: 0, height: 0, pixelRatio: 0 };
   let capturing = false;
   let recapture = false;
   let captureRevision = 0;
@@ -270,6 +271,7 @@ async function start() {
         ctx.restore();
       }
       snapshot = nextSnapshot;
+      snapshotLayout = { width, height, pixelRatio: screenRatio };
       renderer.upload(snapshot, width, height);
       const artRect = artImage.getBoundingClientRect();
       renderer.setPixelArt(pixelArt(artImage), [artRect.left+scrollX, artRect.top+scrollY, artRect.width, artRect.height]);
@@ -357,11 +359,20 @@ async function start() {
   });
   window.addEventListener('scroll', () => interaction.scrollTo(window.scrollY), { passive: true });
   let resizeTimer: ReturnType<typeof setTimeout>;
+  const touchViewport = matchMedia('(pointer:coarse)');
   window.addEventListener('resize', () => {
     renderer.resize();
-    requestRender();
+    interaction.resize();
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { void capture(); }, 200);
+    resizeTimer = setTimeout(() => {
+      // Mobile browser chrome changes viewport height without reflowing the article.
+      // Reuse its texture unless the actual source layout or pixel density changed.
+      if (touchViewport.matches && snapshot
+        && snapshotLayout.width === viewportWidth()
+        && snapshotLayout.height === Math.ceil(source.getBoundingClientRect().height)
+        && snapshotLayout.pixelRatio === (devicePixelRatio || 1)) return;
+      void capture();
+    }, 200);
   });
   renderer.onRestore = () => {
     if (snapshot) renderer.upload(snapshot);

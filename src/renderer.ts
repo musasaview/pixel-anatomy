@@ -14,6 +14,7 @@ export class LCDRenderer {
   private textureWidth = 1;
   private textureHeight = 1;
   private lost = false;
+  private hasZoomFrame = false;
   private sourceWidth = viewportWidth();
   private sourceHeight = innerHeight;
   private animationRect = [0, 0, 0, 0];
@@ -42,6 +43,7 @@ export class LCDRenderer {
     canvas.addEventListener('webglcontextlost', (event) => { event.preventDefault(); this.lost = true; });
     canvas.addEventListener('webglcontextrestored', () => {
       this.lost = false;
+      this.hasZoomFrame = false;
       this.program = this.createProgram();
       this.normalProgram = this.createProgram(normalFragmentShader, this.normalUniforms);
       this.texture = this.createTexture();
@@ -109,8 +111,12 @@ export class LCDRenderer {
     const ratio = this.mode === 11
       ? Math.min(window.devicePixelRatio || 1,this.maxTextureSize/viewportWidth(),this.maxTextureSize/innerHeight)
       : Math.min(window.devicePixelRatio || 1, 1.5, 2560 / viewportWidth(), 1600 / innerHeight, Math.sqrt(2_500_000 / (viewportWidth() * innerHeight)));
-    this.canvas.width = Math.max(1, Math.round(viewportWidth() * ratio));
-    this.canvas.height = Math.max(1, Math.round(innerHeight * ratio));
+    const width = Math.max(1, Math.round(viewportWidth() * ratio));
+    const height = Math.max(1, Math.round(innerHeight * ratio));
+    if (this.canvas.width === width && this.canvas.height === height) return;
+    if (this.canvas.width !== width) this.canvas.width = width;
+    if (this.canvas.height !== height) this.canvas.height = height;
+    this.hasZoomFrame = false;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -208,12 +214,16 @@ export class LCDRenderer {
     // scrolling positions it synchronously, without a fixed overlay chasing it.
     this.advanceTime(view.zoom);
     if (view.zoom === 1) {
-      gl.disable(gl.SCISSOR_TEST);
-      gl.clearColor(0,0,0,0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      if (this.hasZoomFrame) {
+        gl.disable(gl.SCISSOR_TEST);
+        gl.clearColor(0,0,0,0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        this.hasZoomFrame = false;
+      }
       this.drawNativeAnimation();
       return;
     }
+    this.hasZoomFrame = true;
     const normal = this.mode === 11 || view.zoom / this.sourceScale <= 2.2;
     const uniforms = normal ? this.normalUniforms : this.uniforms;
     gl.useProgram(normal ? this.normalProgram : this.program);

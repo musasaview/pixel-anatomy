@@ -165,7 +165,31 @@ export class Interaction {
     this.onChange();
   }
 
+  private syncNativeView() {
+    this.nativeScroll = window.scrollY;
+    this.view.x = viewportWidth() / 2;
+    this.view.y = this.nativeScroll + innerHeight / 2;
+    this.world = { x: this.view.x + this.anchor.x - viewportWidth() / 2, y: this.view.y + this.anchor.y - innerHeight / 2 };
+    this.resetting = false;
+  }
+
+  resize() {
+    if (this.view.zoom === 1 && this.targetZoom === 1) this.syncNativeView();
+    else {
+      // Preserve the viewed source point when mobile browser chrome changes height.
+      this.anchor = { x: viewportWidth() / 2, y: innerHeight / 2 };
+      this.world = { x: this.view.x, y: this.view.y };
+      this.bound();
+    }
+    this.onChange();
+  }
+
   update(dt: number) {
+    if (this.view.zoom === 1 && this.targetZoom === 1) {
+      // Native scrolling owns the position, including momentum between scroll events.
+      this.syncNativeView();
+      return false;
+    }
     const factor = this.reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 13);
     // Log-space damping feels equally responsive at 1x and 1000x, independent of FPS.
     const logError = Math.log(this.targetZoom / this.view.zoom);
@@ -180,14 +204,9 @@ export class Interaction {
     }
     this.bound();
     if (this.view.zoom === 1 && this.targetZoom === 1) {
-      // Rejoin native reading at the source location reached by zooming out.
-      // Never leave the DOM at one scroll position and the animation at another.
+      // Write once when zooming out, never during steady native scrolling.
       if (!this.resetting) window.scrollTo({ top: this.view.y-innerHeight/2, behavior: 'instant' });
-      this.nativeScroll = window.scrollY;
-      this.view.x = viewportWidth()/2;
-      this.view.y = this.nativeScroll+innerHeight/2;
-      this.world = { x: this.view.x+this.anchor.x-viewportWidth()/2, y: this.view.y+this.anchor.y-innerHeight/2 };
-      this.resetting = false;
+      this.syncNativeView();
     }
     const cameraMoving = this.resetting && (Math.abs(this.view.x - viewportWidth() / 2) + Math.abs(this.view.y - window.scrollY - innerHeight / 2) > .001);
     return this.view.zoom !== this.targetZoom || cameraMoving;
