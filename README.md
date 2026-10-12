@@ -1,32 +1,36 @@
-# ピクセルの中身を覗く
+# Inside the Pixel
 
-**[デモを開く → GitHub Pages](https://musasaview.github.io/pixel-anatomy/)**
+English | [日本語](README.ja.md)
 
-ピクセルと、LCD・OLED・CRT・CMYKの構造を拡大して観察するデモ。Ctrl＋ホイール、ピンチ、または画面の＋／−で操作できます。
+**[Open the demo → GitHub Pages](https://musasaview.github.io/pixel-anatomy/)**
+
+An interactive demo for zooming into pixels and exploring the structures of LCD, OLED, CRT, and CMYK printing. Zoom with Ctrl + mouse wheel, a pinch gesture, or the on-screen +/− controls.
 
 ## How it works
 
-等倍では通常のHTMLを表示し、拡大時はWebGL2の描画へ切り替えます。
+At normal size, the page uses regular HTML. When you zoom in, it switches to WebGL2 rendering.
 
-1. `html-to-image` で記事を画像化し、GPUのテクスチャとして読み込みます。内容や画面サイズが変わったときに作り直し、ズーム中は同じ画像を使います。
-2. カーソルや指の位置を基準に、画像のどこを何倍で表示するかを変えます。最大倍率は2048倍です。
-3. 拡大すると、シェーダーが各画素の色からRGBの発光領域や印刷の網点を描きます。PIXELモードでは色を補間せず、元の画素を四角く表示します。
+1. `html-to-image` captures the article as an image and loads it as a GPU texture. The image is rebuilt when the content or viewport size changes and reused while zooming.
+2. Zooming adjusts the visible area and magnification around the cursor or touch position, up to 2048×.
+3. As you zoom in, shaders use each pixel's color to draw RGB light-emitting regions or print halftone dots. PIXEL mode displays the original pixels as squares without color interpolation.
 
-ゲーム画像は元解像度の専用テクスチャを使い、輪郭を保ちます。動く光は毎フレーム再計算するため、ページ全体を撮り直す必要はありません。
+The game image uses a dedicated texture at its original resolution to preserve its edges. Animated light is recalculated every frame, so the entire page does not need to be captured again.
 
-表示される構造は模式的なシミュレーションです。実際の画面を顕微鏡で撮影したものではありません。詳しくは[技術資料](docs/TECHNICAL_NOTES.md)を参照してください。
+The structures shown are illustrative simulations, not microscope photographs of actual displays. See the [technical notes (Japanese)](docs/TECHNICAL_NOTES.md) for details.
 
-## ローカルで動かす
+## Run locally
 
-BunとWebGL2対応ブラウザーを使用します。
+Use Bun and a browser with WebGL2 support.
 
 ```sh
 bun install --frozen-lockfile
 bun run dev
 ```
 
-<http://localhost:5173> を開きます。本番ビルドは `bun run build`。
+Open <http://localhost:5173>. To create a production build, run `bun run build`.
 
-## ライセンス
+## License
 
-コードは[MIT License](LICENSE)。画像の出典と利用条件は[素材クレジット](public/images/CREDITS.md)を参照してください。
+The code is licensed under the [MIT License](LICENSE). See the [image credits](public/images/CREDITS.md) for image sources and usage terms.
+
+Copyright notices and license texts for third-party code included in the distributed JavaScript are provided in [Third-party notices](public/THIRD_PARTY_NOTICES.txt).
