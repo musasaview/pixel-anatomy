@@ -39,15 +39,20 @@ let decimals = new Intl.NumberFormat(language, { minimumFractionDigits: 2, maxim
 let tenths = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
 
 function setText(id: string, text: string) { element(id).textContent = text; }
+function panelName(panel: Panel) {
+  return panel.mode === 11 ? pixelCopy[language].name : panel.mode === 7 ? commonCopy[language].print
+    : (displayCopy[language].modeNames[panel.mode] ?? t.panelNames[panel.mode as number]);
+}
 function updatePanelUI() {
   document.title = t.title;
   document.querySelector('meta[name="description"]')?.setAttribute('content', commonCopy[language].intro);
   setText('emitter-label', activePanel.mode === 11 ? pixelCopy[language].unitLabel : activePanel.mode === 7 ? dotLabels[language] : t.metrics[3]);
+  setText('panel-name', panelName(activePanel));
   const groups = ['PIXEL', 'LCD', 'OLED', 'CRT', 'CMYK'];
   element('panel-options').innerHTML = groups.map(group => {
     const members = panels.filter(panel => panel.tag.startsWith(group === 'CMYK' ? 'PRINT' : group));
     return `<div class="panel-icon-group" role="group" aria-label="${group}"><span class="panel-group-label">${group}</span><div>${members.map(panel => {
-      const name = panel.mode === 11 ? pixelCopy[language].name : panel.mode === 7 ? commonCopy[language].print : (displayCopy[language].modeNames[panel.mode] ?? t.panelNames[panel.mode as number]);
+      const name = panelName(panel);
       return `<button class="panel-icon-button" data-panel="${panel.id}" title="${escapeHTML(name)}" aria-label="${escapeHTML(name)}" aria-pressed="${panel.mode === activePanel.mode}">${panelIcon(panel.pattern)}</button>`;
     }).join('')}</div></div>`;
   }).join('');
@@ -171,8 +176,9 @@ async function start() {
   let lastHUD = '';
   let snapshot: HTMLCanvasElement | null = null;
   let snapshotLayout = { width: 0, height: 0, pixelRatio: 0 };
+  let snapshotRegions: { element: HTMLElement; x: number; y: number; width: number; height: number }[] = [];
   let capturing = false;
-  let recapture = false;
+  let recapture: boolean | null = null;
   let captureRevision = 0;
   const zoomValue = element<HTMLOutputElement>('zoom-value');
   const distanceValue = element<HTMLOutputElement>('distance-value');
@@ -194,8 +200,6 @@ async function start() {
     const mm = 600 / zoom;
     distanceValue.innerHTML = mm >= 10 ? `${tenths.format(mm / 10)} <small>cm</small>`
       : mm >= 1 ? `${decimals.format(mm)} <small>mm</small>` : `${Math.round(mm * 1000)} <small>μm</small>`;
-    const stage = zoom < 4 ? 0 : zoom < 14 ? 1 : zoom < 60 ? 2 : zoom < 250 ? 3 : 4;
-    setText('stage-label', activePanel.mode === 11 ? 'PIXEL' : activePanel.mode === 7 ? 'CMYK' : t.stages[stage]);
   };
 
   const tick = (time: number) => {
@@ -212,9 +216,30 @@ async function start() {
   const requestRender = () => { if (!frame) frame = requestAnimationFrame(tick); };
   interaction.onChange = requestRender;
 
-  async function capture() {
+  const measureRegions = () => [source, ...source.querySelectorAll<HTMLElement>('header, section, aside, figure, img, h1, h2, h3, p, #light-stage, footer')]
+    .map(element => {
+      const rect = element.getBoundingClientRect();
+      return { element, x: rect.left + scrollX, y: rect.top + scrollY, width: rect.width, height: rect.height };
+    })
+    .filter(rect => rect.width > 0 && rect.height > 0)
+    .sort((a, b) => a.width * a.height - b.width * b.height);
+
+  const resizedCenter = () => {
+    const { x, y } = interaction.view;
+    // Prefer the image under the microscope to its containing section or page.
+    const region = snapshotRegions.find(rect => rect.element.isConnected
+      && x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height);
+    if (!region) return;
+    const rect = region.element.getBoundingClientRect();
+    return {
+      x: rect.left + scrollX + (x - region.x) / region.width * rect.width,
+      y: rect.top + scrollY + (y - region.y) / region.height * rect.height,
+    };
+  };
+
+  async function capture(preserveView = false) {
     const revision = ++captureRevision;
-    if (capturing) { recapture = true; return; }
+    if (capturing) { recapture = preserveView; return; }
     capturing = true;
     status.textContent = t.loading;
     try {
@@ -283,8 +308,11 @@ async function start() {
       renderer.setPrintPhotoRect([printRect.left+window.scrollX, printRect.top+window.scrollY, printRect.width, printRect.height]);
       const slot = element('photo-actions-slot').getBoundingClientRect();
       photoRect = { x: slot.left+window.scrollX, y: slot.top+window.scrollY, width: slot.width };
+      const center = preserveView ? resizedCenter() : undefined;
       interaction.setContentSize(width, height);
-      interaction.reset(true);
+      if (preserveView) interaction.resize(center);
+      else interaction.reset(true);
+      snapshotRegions = measureRegions();
       lastHUD = '';
       requestRender();
       canvas.classList.add('ready');
@@ -302,7 +330,11 @@ async function start() {
       console.error(error);
     } finally {
       capturing = false;
-      if (recapture) { recapture = false; void capture(); }
+      if (recapture !== null) {
+        const preserveNextView = recapture;
+        recapture = null;
+        void capture(preserveNextView);
+      }
     }
   }
 
@@ -359,19 +391,18 @@ async function start() {
   });
   window.addEventListener('scroll', () => interaction.scrollTo(window.scrollY), { passive: true });
   let resizeTimer: ReturnType<typeof setTimeout>;
-  const touchViewport = matchMedia('(pointer:coarse)');
   window.addEventListener('resize', () => {
     renderer.resize();
     interaction.resize();
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      // Mobile browser chrome changes viewport height without reflowing the article.
+      // A viewport height change may leave the article layout unchanged.
       // Reuse its texture unless the actual source layout or pixel density changed.
-      if (touchViewport.matches && snapshot
+      if (snapshot
         && snapshotLayout.width === viewportWidth()
         && snapshotLayout.height === Math.ceil(source.getBoundingClientRect().height)
         && snapshotLayout.pixelRatio === (devicePixelRatio || 1)) return;
-      void capture();
+      void capture(true);
     }, 200);
   });
   renderer.onRestore = () => {

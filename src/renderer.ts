@@ -9,6 +9,7 @@ export class LCDRenderer {
   private normalUniforms: Record<string, WebGLUniformLocation | null> = {};
   private texture: WebGLTexture;
   private pixelArtTexture: WebGLTexture;
+  private pixelArtSource: HTMLCanvasElement | null = null;
   private pixelArtRect = [0, 0, 0, 0];
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
   private textureWidth = 1;
@@ -48,6 +49,8 @@ export class LCDRenderer {
       this.normalProgram = this.createProgram(normalFragmentShader, this.normalUniforms);
       this.texture = this.createTexture();
       this.pixelArtTexture = this.createTexture();
+      if (this.pixelArtSource) this.setPixelArt(this.pixelArtSource, this.pixelArtRect);
+      gl.viewport(0, 0, canvas.width, canvas.height);
       this.onRestore?.();
     });
   }
@@ -95,11 +98,11 @@ export class LCDRenderer {
   }
 
   upload(source: HTMLCanvasElement, width = this.sourceWidth, height = this.sourceHeight) {
-    if (this.lost) return;
     this.sourceWidth = width;
     this.sourceHeight = height;
     this.textureWidth = source.width;
     this.textureHeight = source.height;
+    if (this.lost) return;
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -123,7 +126,10 @@ export class LCDRenderer {
   get sourceScale() { return this.textureWidth / this.sourceWidth; }
 
   setPixelArt(source: HTMLCanvasElement, rect: number[]) {
+    // Retain the original pixels and the latest layout even while the GPU is lost.
+    this.pixelArtSource = source;
     this.pixelArtRect = rect;
+    if (this.lost) return;
     const gl = this.gl;
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D,this.pixelArtTexture);

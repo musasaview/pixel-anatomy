@@ -173,10 +173,11 @@ export class Interaction {
     this.resetting = false;
   }
 
-  resize() {
+  resize(center?: Point) {
     if (this.view.zoom === 1 && this.targetZoom === 1) this.syncNativeView();
     else {
-      // Preserve the viewed source point when mobile browser chrome changes height.
+      // A new article snapshot may move the observed image or section after reflow.
+      if (center) Object.assign(this.view, center);
       this.anchor = { x: viewportWidth() / 2, y: innerHeight / 2 };
       this.world = { x: this.view.x, y: this.view.y };
       this.bound();
